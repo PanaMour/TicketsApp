@@ -1,0 +1,47 @@
+﻿@model IEnumerable<TicketsApp.Models.Attendee>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.AttendeeName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CheckInTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Booking)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.AttendeeName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CheckInTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Booking.BookingId)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.AttendeeId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.AttendeeId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.AttendeeId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
