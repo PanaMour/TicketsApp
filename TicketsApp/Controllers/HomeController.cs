@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-using TicketsAppBackEnd.Models;
+using TicketsApp.Models;
 
-namespace TicketsAppBackEnd.Controllers
+namespace TicketsApp.Controllers
 {
     public class HomeController : Controller
     {

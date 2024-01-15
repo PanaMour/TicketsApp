@@ -1,4 +1,4 @@
-namespace TicketsAppBackEnd.Models
+namespace TicketsApp.Models
 {
     public class ErrorViewModel
     {
