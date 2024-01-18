@@ -13,7 +13,7 @@ public partial class Booking
 
     public int? NumberOfTickets { get; set; }
 
-    public DateTime? BookingDate { get; set; }
+    public string BookingDate { get; set; }
 
     public virtual ICollection<Attendee> Attendees { get; set; } = new List<Attendee>();
 

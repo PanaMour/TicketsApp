@@ -13,9 +13,9 @@ public partial class Event
 
     public int? VenueId { get; set; }
 
-    public DateTime? EventDate { get; set; }
+    public string EventDate { get; set; }
 
-    public TimeSpan? EventTime { get; set; }
+    public string EventTime { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 

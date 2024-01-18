@@ -35,7 +35,7 @@ public partial class TicketsappdbContext : DbContext
         {
             entity.Property(e => e.AttendeeId).HasColumnName("AttendeeID");
             entity.Property(e => e.BookingId).HasColumnName("BookingID");
-            entity.Property(e => e.CheckInTime).HasColumnType("TIME");
+            //entity.Property(e => e.CheckInTime).HasColumnType("TIME");
 
             entity.HasOne(d => d.Booking).WithMany(p => p.Attendees).HasForeignKey(d => d.BookingId);
         });
@@ -43,7 +43,7 @@ public partial class TicketsappdbContext : DbContext
         modelBuilder.Entity<Booking>(entity =>
         {
             entity.Property(e => e.BookingId).HasColumnName("BookingID");
-            entity.Property(e => e.BookingDate).HasColumnType("DATE");
+            //entity.Property(e => e.BookingDate).HasColumnType("DATE");
             entity.Property(e => e.EventId).HasColumnName("EventID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
 
@@ -55,8 +55,8 @@ public partial class TicketsappdbContext : DbContext
         modelBuilder.Entity<Event>(entity =>
         {
             entity.Property(e => e.EventId).HasColumnName("EventID");
-            entity.Property(e => e.EventDate).HasColumnType("DATE");
-            entity.Property(e => e.EventTime).HasColumnType("TIME");
+            //entity.Property(e => e.EventDate).HasColumnType("DATE");
+            //entity.Property(e => e.EventTime).HasColumnType("TIME");
             entity.Property(e => e.VenueId).HasColumnName("VenueID");
 
             entity.HasOne(d => d.Venue).WithMany(p => p.Events).HasForeignKey(d => d.VenueId);

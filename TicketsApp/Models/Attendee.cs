@@ -11,7 +11,7 @@ public partial class Attendee
 
     public string AttendeeName { get; set; } = null!;
 
-    public TimeSpan? CheckInTime { get; set; }
+    public string CheckInTime { get; set; }
 
     public virtual Booking? Booking { get; set; }
 }
