@@ -4,24 +4,73 @@
     Layout = "_Layout1";
 }
 
-<h1>Login</h1>
-<div class="row">
-    <div class="col-md-4">
-        <form asp-actioSn="Login" asp-controller="Users">
-            <div asp-validation-summary="All" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="UserName" class="control-label"></label>
-                <input asp-for="UserName" class="form-control" placeholder="Name" />
-                <span asp-validation-for="UserName" class="text-danger"></span>
+<style>
+    .card-header-custom {
+        background-color: #0FC2C0;
+        color: #023535;
+    }
+    .btn-custom {
+        background-color: #0CABA8;
+        border-color: #008F8C;
+        color: #ffffff;
+    }
+    .btn-google {
+        color: #5f6368;
+        background-color: #ffffff;
+        border: 1px solid #dadce0;
+    }
+    .card-footer-custom {
+        background-color: #015958;
+        color: #ffffff;
+    }
+    .btn-link-custom {
+        color: #0FC2C0;
+    }
+    .btn-link-custom:hover {
+        color: #0CABA8;
+    }
+</style>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow" style="border-radius: 0.5rem;">
+                <div class="card-header card-header-custom text-center" style="border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;">
+                    <h3 class="card-title mb-0">Login to Your Account</h3>
+                </div>
+                <div class="card-body py-4">
+                    <form asp-action="Login" asp-controller="Users" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+
+                        <div class="form-group mb-3">
+                            <label for="UserName" class="control-label">Username</label>
+                            <input type="text" id="UserName" name="UserName" class="form-control" placeholder="Enter your username" required>
+                            <div class="invalid-feedback">Please enter your username.</div>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="Password" class="control-label">Password</label>
+                            <input type="password" id="Password" name="Password" class="form-control" placeholder="Enter your password" required>
+                            <div class="invalid-feedback">Please enter your password.</div>
+                        </div>
+
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-custom btn-block" style="padding: 0.5rem 0; font-size: 1.1rem;width: 100px;">Sign In</button>
+                        </div>
+                        </form>
+                        <hr/>
+                        <div class="text-center">
+                            <p>Or login with:</p>
+                             <a asp-area="" asp-controller="Account" asp-action="GoogleLogin" class="btn btn-google" style="padding: 0px 24px; line-height: 40px; display: inline-flex; align-items: center; justify-content: center;">
+                                <img src="~/images/google_icon.svg" alt="Google" style="margin-right: 10px; height: 18px; width: 18px;">
+                                Continue with Google
+                            </a>
+                        </div>
+                    
+                </div>
+                <div class="card-footer card-footer-custom text-center">
+                    New here? <a asp-action="Register" asp-controller="Users" class="btn btn-link">Create an account</a>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Password" class="control-label"></label>
-                <input asp-for="Password" class="form-control" placeholder="Password" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Login" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
