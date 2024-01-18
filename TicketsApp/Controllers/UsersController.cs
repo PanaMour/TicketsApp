@@ -17,6 +17,10 @@ namespace TicketsApp.Controllers
         {
             _context = context;
         }
+        public IActionResult Login()
+        {
+            return View();
+        }
 
         // GET: Users
         public async Task<IActionResult> Index()
@@ -151,6 +155,24 @@ namespace TicketsApp.Controllers
         private bool UserExists(int id)
         {
             return _context.Users.Any(e => e.UserId == id);
+        }
+        [HttpPost]
+        public async Task<IActionResult> Login(User model)
+        {
+            var User = from m in _context.Users select m;
+            User = User.Where(s => s.UserName.Contains(model.UserName));
+            if (User.Count() != 0)
+            {
+                if (User.First().Password == model.Password)
+                {
+                    return RedirectToAction(nameof(Index),"Home");
+                }
+                return RedirectToAction("Login");
+            }
+            else
+            {
+                return RedirectToAction("Login");
+            }
         }
     }
 }

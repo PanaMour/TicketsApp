@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using TicketsApp.Models;
 
@@ -17,7 +18,7 @@ namespace TicketsApp.Controllers
         {
             return View();
         }
-
+       
         public IActionResult Privacy()
         {
             return View();
