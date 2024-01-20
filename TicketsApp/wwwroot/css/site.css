@@ -20,3 +20,29 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.navbar-custom {
+    background-color: #0FC2C0;
+    border-bottom-color: #008F8C;
+}
+
+.nav-link-custom {
+    color: #023535;
+}
+
+    .nav-link-custom:hover {
+        color: #0CABA8;
+    }
+
+.footer-custom {
+    background-color: #015958;
+    color: #ffffff;
+}
+
+    .footer-custom a {
+        color: #0FC2C0;
+    }
+
+        .footer-custom a:hover {
+            color: #0CABA8;
+        }
