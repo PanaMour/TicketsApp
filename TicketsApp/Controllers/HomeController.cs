@@ -23,6 +23,10 @@ namespace TicketsApp.Controllers
         {
             return View();
         }
+        public IActionResult Organizer()
+        {
+            return View();
+        }
         public IActionResult Administrator()
         {
             return View();
