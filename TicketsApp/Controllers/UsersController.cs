@@ -167,7 +167,7 @@ namespace TicketsApp.Controllers
                 switch (user.Role)
                 {
                     case "Administrator":
-                        return RedirectToAction("Admin", "Home");
+                        return RedirectToAction("Administrator", "Home");
                     case "Organizer":
                         return RedirectToAction("Organizer", "Home");
                     default:
