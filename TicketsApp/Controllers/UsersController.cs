@@ -159,19 +159,25 @@ namespace TicketsApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(User model)
         {
-            var User = from m in _context.Users select m;
-            User = User.Where(s => s.UserName.Contains(model.UserName));
-            if (User.Count() != 0)
+            var user = await _context.Users
+                                      .FirstOrDefaultAsync(u => u.UserName == model.UserName && u.Password == model.Password);
+
+            if (user != null)
             {
-                if (User.First().Password == model.Password)
+                switch (user.Role)
                 {
-                    return RedirectToAction(nameof(Index),"Home");
+                    case "Administrator":
+                        return RedirectToAction("Admin", "Home");
+                    case "Organizer":
+                        return RedirectToAction("Organizer", "Home");
+                    default:
+                        return RedirectToAction("Index", "Home"); 
                 }
-                return RedirectToAction("Login");
             }
             else
             {
-                return RedirectToAction("Login");
+                ModelState.AddModelError("", "Invalid username or password");
+                return View(model);
             }
         }
     }
