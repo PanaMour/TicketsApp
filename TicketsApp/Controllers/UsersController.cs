@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -179,6 +182,29 @@ namespace TicketsApp.Controllers
                 ModelState.AddModelError("", "Invalid username or password");
                 return View(model);
             }
+        }
+
+        [HttpGet]
+        public IActionResult GoogleLogin(string returnUrl = "/")
+        {
+            var authenticationProperties = new AuthenticationProperties
+            {
+                RedirectUri = Url.Action("GoogleResponse", "Users", new { ReturnUrl = returnUrl })
+            };
+            return Challenge(authenticationProperties, GoogleDefaults.AuthenticationScheme);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GoogleResponse()
+        {
+            var authenticateResult = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+
+            if (!authenticateResult.Succeeded)
+                return BadRequest();
+
+            // Sign in the user with your own system
+
+            return RedirectToAction("Index", "Home");
         }
     }
 }
