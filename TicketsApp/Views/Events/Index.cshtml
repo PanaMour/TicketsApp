@@ -1,59 +1,126 @@
 ﻿@model IEnumerable<TicketsApp.Models.Event>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Event Calendar";
+    var currentDate = DateTime.Today;
+
+    // Get the current year and month or default to today
+    var year = Context.Request.Query.ContainsKey("year") ? int.Parse(Context.Request.Query["year"]) : DateTime.Today.Year;
+    var month = Context.Request.Query.ContainsKey("month") ? int.Parse(Context.Request.Query["month"]) : DateTime.Today.Month;
+
+    // Calculate the first and last day of the current month
+    var firstDayOfMonth = new DateTime(year, month, 1);
+    var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+
+    // Get the first and last day to display in the calendar view
+    var startOfCalendar = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
+    var endOfCalendar = lastDayOfMonth.AddDays(7 - (int)lastDayOfMonth.DayOfWeek - 1);
+
+    // Generate the links for previous and next months
+    var prevMonthLink = Url.Action("Index", new { year = firstDayOfMonth.AddMonths(-1).Year, month = firstDayOfMonth.AddMonths(-1).Month });
+    var nextMonthLink = Url.Action("Index", new { year = firstDayOfMonth.AddMonths(1).Year, month = firstDayOfMonth.AddMonths(1).Month });
+
+    // Group events by date
+    var eventsByDate = Model
+    .Select(e => new
+    {
+        Event = e,
+        ParsedDate = DateTime.Parse(e.EventDate)
+    })
+    .GroupBy(e => e.ParsedDate.Date)
+    .ToDictionary(g => g.Key, g => g.Select(x => x.Event).ToList());
+
 }
 
-<h1>Index</h1>
+<h1>@ViewData["Title"]</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
+<div class="calendar-navigation">
+    <a href="@prevMonthLink">Previous</a>
+    <span>@firstDayOfMonth.ToString("MMMM yyyy")</span>
+    <a href="@nextMonthLink">Next</a>
+</div>
+
+<table class="calendar">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EventName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EventDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EventTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Venue)
-            </th>
-            <th></th>
+            <th>Sunday</th>
+            <th>Monday</th>
+            <th>Tuesday</th>
+            <th>Wednesday</th>
+            <th>Thursday</th>
+            <th>Friday</th>
+            <th>Saturday</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EventName)
+        @for (var day = startOfCalendar; day <= endOfCalendar; day = day.AddDays(1))
+        {
+            if (day.DayOfWeek == DayOfWeek.Sunday)
+            {
+                @:<tr>
+            }
+
+            var hasEvent = eventsByDate.ContainsKey(day.Date);
+            var isPastEvent = hasEvent && day.Date < currentDate;
+            var isFutureEvent = hasEvent && day.Date >= currentDate;
+            <td class="@{
+            if (isPastEvent)
+            {
+                WriteLiteral("past-event");
+            }
+            else if (isFutureEvent)
+            {
+                WriteLiteral("future-event");
+            }
+        }">
+                <div class="date">@day.Day</div>
+                @if (hasEvent)
+                {
+                    foreach (var eventItem in eventsByDate[day.Date])
+                    {
+                        <div class="event">
+                            <a asp-action="Details" asp-controller="Events" asp-route-id="@eventItem.EventId">@eventItem.EventName</a>@eventItem.EventTime                            
+                        </div>
+                    }
+                }
             </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EventDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EventTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Venue.VenueId)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.EventId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.EventId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.EventId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
+
+            if (day.DayOfWeek == DayOfWeek.Saturday)
+            {
+                @:</tr>
+            }
+        }
+</tbody>
+
 </table>
+
+<style>
+    .calendar-navigation {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .calendar {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .calendar th, .calendar td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+        vertical-align: top;
+    }
+    .calendar th {
+        background-color: #f2f2f2;
+    }
+    .past-event {
+        background-color: #ffcccc;
+    }
+    .future-event {
+        background-color: #ccffcc;
+    }
+    .event a {
+        color: #0000EE; 
+        text-decoration: underline;
+    }
+</style>

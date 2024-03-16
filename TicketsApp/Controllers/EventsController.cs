@@ -19,11 +19,33 @@ namespace TicketsApp.Controllers
         }
 
         // GET: Events
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? year, int? month)
         {
-            var ticketsappdbContext = _context.Events.Include(a => a.Venue);
-            return View(await ticketsappdbContext.ToListAsync());
+            // Fetch all events and include related data as needed
+            var allEvents = await _context.Events
+                .Include(e => e.Venue)
+                .ToListAsync();
+
+            // Now that we have all events in memory, we can filter them
+            var targetYear = year ?? DateTime.Today.Year;
+            var targetMonth = month ?? DateTime.Today.Month;
+
+            var firstDayOfMonth = new DateTime(targetYear, targetMonth, 1);
+            var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+
+            // Use LINQ to objects to filter the events
+            var eventsThisMonth = allEvents
+                .Where(e => {
+                    DateTime eventDate;
+                    return DateTime.TryParse(e.EventDate, out eventDate) &&
+                           eventDate >= firstDayOfMonth &&
+                           eventDate <= lastDayOfMonth;
+                })
+                .ToList();
+
+            return View(eventsThisMonth);
         }
+
 
         // GET: Events/Details/5
         public async Task<IActionResult> Details(int? id)
