@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -167,6 +169,28 @@ namespace TicketsApp.Controllers
 
             if (user != null)
             {
+                // Create a list of claims for the user
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.Role, user.Role),
+                    // Add more claims as needed
+                };
+
+                // Create a ClaimsIdentity
+                var claimsIdentity = new ClaimsIdentity(
+                    claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                // Create a ClaimsPrincipal
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                // Sign in the user
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    claimsPrincipal,
+                    new AuthenticationProperties { IsPersistent = true }); // Set to true if you want the login to persist across browser sessions
+
+                // Redirect the user based on their role
                 switch (user.Role)
                 {
                     case "Administrator":
@@ -174,7 +198,7 @@ namespace TicketsApp.Controllers
                     case "Organizer":
                         return RedirectToAction("Organizer", "Home");
                     default:
-                        return RedirectToAction("Index", "Home"); 
+                        return RedirectToAction("Index", "Home");
                 }
             }
             else
@@ -182,6 +206,7 @@ namespace TicketsApp.Controllers
                 ModelState.AddModelError("", "Invalid username or password");
                 return View(model);
             }
+
         }
 
         [HttpGet]
@@ -202,7 +227,38 @@ namespace TicketsApp.Controllers
             if (!authenticateResult.Succeeded)
                 return BadRequest();
 
-            // Sign in the user with your own system
+            var email = authenticateResult.Principal.FindFirstValue(ClaimTypes.Email);
+            var name = authenticateResult.Principal.FindFirstValue(ClaimTypes.Name);
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                user = new User
+                {
+                    Email = email,
+                    UserName = name,
+                    Password = "a",
+                    Role = "Attendee"
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role)
+            };
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties { IsPersistent = true };
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
 
             return RedirectToAction("Index", "Home");
         }

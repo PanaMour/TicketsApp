@@ -29,6 +29,9 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="" asp-action="">Logout</a>
                         </li>
                     </ul>
+                    <span class="navbar-text">
+                        Hello, @User.Identity?.Name
+                    </span>
                 </div>
             </div>
         </nav>
