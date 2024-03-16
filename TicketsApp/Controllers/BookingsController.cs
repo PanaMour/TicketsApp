@@ -48,7 +48,7 @@ namespace TicketsApp.Controllers
         // GET: Bookings/Create
         public IActionResult Create()
         {
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventId");
+            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName");
             ViewData["UserId"] = new SelectList(_context.Users, "UserId", "UserId");
             return View();
         }
@@ -66,7 +66,7 @@ namespace TicketsApp.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventId", booking.EventId);
+            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", booking.EventId);
             ViewData["UserId"] = new SelectList(_context.Users, "UserId", "UserId", booking.UserId);
             return View(booking);
         }
@@ -84,7 +84,7 @@ namespace TicketsApp.Controllers
             {
                 return NotFound();
             }
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventId", booking.EventId);
+            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", booking.EventId);
             ViewData["UserId"] = new SelectList(_context.Users, "UserId", "UserId", booking.UserId);
             return View(booking);
         }
@@ -165,5 +165,25 @@ namespace TicketsApp.Controllers
         {
             return _context.Bookings.Any(e => e.BookingId == id);
         }
+        private async Task SendEmailToInvitees(Booking booking)
+        {
+            var eventDetails = _context.Events.Include(e => e.Venue).FirstOrDefault(e => e.EventId == booking.EventId);
+            if (eventDetails == null) return;
+
+            //var emailService = new EmailService(); // Assume this is your email service class
+            //var emailContent = $"You've been invited to {eventDetails.EventName} on {booking.BookingDate}. Location: {eventDetails.Location}.";
+            // Include more details and construct HTML email as needed
+
+            try
+            {
+                //await emailService.SendEmailAsync("invitee@example.com", "Invitation to Movie Night", emailContent);
+                // Loop through invitees if you have multiple
+            }
+            catch (Exception ex)
+            {
+                // Handle exception (logging, notifying the user, etc.)
+            }
+        }
+
     }
 }
