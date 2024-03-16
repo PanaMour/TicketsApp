@@ -169,28 +169,22 @@ namespace TicketsApp.Controllers
 
             if (user != null)
             {
-                // Create a list of claims for the user
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
                     new Claim(ClaimTypes.Role, user.Role),
-                    // Add more claims as needed
                 };
 
-                // Create a ClaimsIdentity
                 var claimsIdentity = new ClaimsIdentity(
                     claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-                // Create a ClaimsPrincipal
                 var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
-                // Sign in the user
                 await HttpContext.SignInAsync(
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     claimsPrincipal,
-                    new AuthenticationProperties { IsPersistent = true }); // Set to true if you want the login to persist across browser sessions
+                    new AuthenticationProperties { IsPersistent = true });
 
-                // Redirect the user based on their role
                 switch (user.Role)
                 {
                     case "Administrator":
@@ -262,5 +256,30 @@ namespace TicketsApp.Controllers
 
             return RedirectToAction("Index", "Home");
         }
+        public IActionResult Register()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register([Bind("UserName,Password,Email,Role")] User user)
+        {
+            if (ModelState.IsValid)
+            {
+                var existingUser = await _context.Users.AnyAsync(u => u.Email == user.Email);
+                if (existingUser)
+                {
+                    ModelState.AddModelError("Email", "Email already in use.");
+                    return View(user);
+                }
+
+                _context.Add(user);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Login)); 
+            }
+            return View(user);
+        }
+
     }
 }
