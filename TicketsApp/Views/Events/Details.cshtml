@@ -63,7 +63,7 @@
                 </div>
                 <div class="card-footer card-footer-custom text-center">
                     <a asp-action="Index" class="btn btn-back-to-events">Back to Events</a>
-                    <a href="@Url.Action("Details", "Bookings", new { id = Model.EventId })" class="btn btn-book-now">Book Now</a>
+                    <a href="@Url.Action("Create", "Bookings", new { eventId = Model.EventId, eventName = Model.EventName, eventDate = Model.EventDate })" class="btn btn-book-now">Book Now</a>
                 </div>
             </div>
         </div>

@@ -28,7 +28,7 @@ builder.Services.AddAuthentication(options =>
     googleOptions.ClientSecret = "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";
     googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 });
-
+builder.Services.AddTransient<IEmailService, EmailService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -12,10 +12,12 @@ namespace TicketsApp.Controllers
     public class BookingsController : Controller
     {
         private readonly TicketsappdbContext _context;
+        private readonly IEmailService _emailService;
 
-        public BookingsController(TicketsappdbContext context)
+        public BookingsController(TicketsappdbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // GET: Bookings
@@ -46,10 +48,13 @@ namespace TicketsApp.Controllers
         }
 
         // GET: Bookings/Create
-        public IActionResult Create()
+        public IActionResult Create(int eventId, string eventName, string eventDate)
         {
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName");
-            ViewData["UserId"] = new SelectList(_context.Users, "UserId", "UserId");
+            ViewData["EventId"] = eventId; 
+            ViewData["EventName"] = eventName;
+            ViewData["EventDate"] = eventDate;
+            //ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName");
+            ViewData["UserId"] = new SelectList(_context.Users, "UserId", "UserName");
             return View();
         }
 
@@ -58,16 +63,37 @@ namespace TicketsApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("BookingId,UserId,EventId,NumberOfTickets,BookingDate")] Booking booking)
+        public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets")] Booking booking, string userEmail)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(booking);
-                await _context.SaveChangesAsync();
+            // Set UserID to the ID of the logged-in user. Replace with your user retrieval method.
+            // e.g., if you are using ASP.NET Core Identity, it would be like this:
+            // booking.UserId = _userManager.GetUserId(User); // This requires UserManager to be injected into your controller.
+
+            // The booking date is set to the current date as it's a new booking.
+            booking.BookingDate = DateTime.Now.ToString("yyyy-MM-dd"); // Use UTC date to avoid timezone issues.
+            
+                try
+                {
+                    _context.Add(booking);
+                    await _context.SaveChangesAsync();
+                    var eventDetails = await _context.Events
+                    .Include(e => e.Venue)
+                    .FirstOrDefaultAsync(e => e.EventId == booking.EventId);
+
+                    if (eventDetails != null)
+                    {
+                    await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
+                }
                 return RedirectToAction(nameof(Index));
-            }
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", booking.EventId);
-            ViewData["UserId"] = new SelectList(_context.Users, "UserId", "UserId", booking.UserId);
+                }
+                catch (Exception ex)
+                {
+                    // Log the exception here; it will help you to understand why the booking is not being saved.
+                    ModelState.AddModelError("", "There was an error saving the booking. Please try again.");
+                }
+
+            
+            // If we get here, something went wrong. Include necessary ViewData or TempData for the view.
             return View(booking);
         }
 
@@ -165,25 +191,21 @@ namespace TicketsApp.Controllers
         {
             return _context.Bookings.Any(e => e.BookingId == id);
         }
-        private async Task SendEmailToInvitees(Booking booking)
+        private async Task SendEmailToUser(int bookingId, Event eventDetails, string userEmail)
         {
-            var eventDetails = _context.Events.Include(e => e.Venue).FirstOrDefault(e => e.EventId == booking.EventId);
-            if (eventDetails == null) return;
+            var emailContent = $"Thank you for your booking.\n\n" +
+                               $"Booking ID: {bookingId}\n" +
+                               $"Event Name: {eventDetails.EventName}\n" +
+                               $"Description: {eventDetails.Description}\n" +
+                               $"Venue Name: {eventDetails.Venue.VenueName}\n" +
+                               $"Location: {eventDetails.Venue.Location}";
 
-            //var emailService = new EmailService(); // Assume this is your email service class
-            //var emailContent = $"You've been invited to {eventDetails.EventName} on {booking.BookingDate}. Location: {eventDetails.Location}.";
-            // Include more details and construct HTML email as needed
+            // Use your email service to send the email
+            var emailService = new EmailService(); // Replace with your email service
+            await emailService.SendEmailAsync(userEmail, "Your Booking Confirmation", emailContent);
 
-            try
-            {
-                //await emailService.SendEmailAsync("invitee@example.com", "Invitation to Movie Night", emailContent);
-                // Loop through invitees if you have multiple
-            }
-            catch (Exception ex)
-            {
-                // Handle exception (logging, notifying the user, etc.)
-            }
         }
+
 
     }
 }
