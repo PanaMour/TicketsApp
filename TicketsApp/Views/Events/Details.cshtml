@@ -33,6 +33,12 @@
         color: #ffffff;
         background-color: #023535;
     }
+
+    .venue-image {
+        max-width: 100%;
+        height: auto;
+        object-fit: cover;
+    }
 </style>
 
 <div class="container my-5">
@@ -59,6 +65,14 @@
                         </dd>
                         <dt class="col-sm-3">Capacity:</dt>
                         <dd class="col-sm-9">@Html.DisplayFor(model => model.Venue.Capacity)</dd>
+                        @if (!string.IsNullOrEmpty(Model.Venue.ImageUrl))
+                        {
+                            <dt class="col-sm-3">Venue Image:</dt>
+                            <dd class="col-sm-9">
+                                <img src="@Model.Venue.ImageUrl" alt="Venue Image" class="img-fluid venue-image" />
+                            </dd>
+                        }
+
                     </dl>
                 </div>
                 <div class="card-footer card-footer-custom text-center">
