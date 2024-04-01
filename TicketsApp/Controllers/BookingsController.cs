@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -65,13 +66,11 @@ namespace TicketsApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets")] Booking booking, string userEmail)
         {
-            // Set UserID to the ID of the logged-in user. Replace with your user retrieval method.
-            // e.g., if you are using ASP.NET Core Identity, it would be like this:
-            // booking.UserId = _userManager.GetUserId(User); // This requires UserManager to be injected into your controller.
+            if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            {
+                booking.UserId = userId; 
+                booking.BookingDate = DateTime.Now.ToString("yyyy-MM-dd"); 
 
-            // The booking date is set to the current date as it's a new booking.
-            booking.BookingDate = DateTime.Now.ToString("yyyy-MM-dd"); // Use UTC date to avoid timezone issues.
-            
                 try
                 {
                     _context.Add(booking);
@@ -82,17 +81,21 @@ namespace TicketsApp.Controllers
 
                     if (eventDetails != null)
                     {
-                    await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
-                }
-                return RedirectToAction(nameof(Index));
+                        //await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
+                    }
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
                 {
-                    // Log the exception here; it will help you to understand why the booking is not being saved.
                     ModelState.AddModelError("", "There was an error saving the booking. Please try again.");
                 }
+            }
+            else
+            {
+                ModelState.AddModelError("UserId", "There was a problem retrieving your user information. Please try again.");
+                return View(booking);
+            }
 
-            
             // If we get here, something went wrong. Include necessary ViewData or TempData for the view.
             return View(booking);
         }
