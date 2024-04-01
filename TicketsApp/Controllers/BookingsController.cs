@@ -23,9 +23,19 @@ namespace TicketsApp.Controllers
 
         // GET: Bookings
         public async Task<IActionResult> Index()
-        {
-            var ticketsappdbContext = _context.Bookings.Include(b => b.Event).Include(b => b.User);
-            return View(await ticketsappdbContext.ToListAsync());
+        {   
+            if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            {
+                var bookingsForUser = _context.Bookings
+                 .Where(b => b.UserId == userId)
+                 .Include(b => b.Event)
+                 .Include(b => b.User);
+                return View(await bookingsForUser.ToListAsync());
+            }else
+            {
+                var ticketsappdbContext = _context.Bookings.Include(b => b.Event).Include(b => b.User);
+                return View(await ticketsappdbContext.ToListAsync());
+            }
         }
 
         // GET: Bookings/Details/5
