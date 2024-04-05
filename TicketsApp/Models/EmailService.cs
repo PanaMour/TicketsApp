@@ -11,7 +11,7 @@
             var smtpClient = new SmtpClient("smtp.google.com")
             {
                 Port = 587,
-                Credentials = new NetworkCredential("ticketsappnoreply@gmail.com", "ticketsappnoreply"),
+                Credentials = new NetworkCredential("ticketsappnoreply@gmail.com", "ticketsappnoreply123"),
                 EnableSsl = true,
             };
 
