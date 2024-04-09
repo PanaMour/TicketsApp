@@ -74,7 +74,7 @@ namespace TicketsApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets")] Booking booking, string userEmail)
+        public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets")] Booking booking)
         {
             if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
             {
@@ -85,13 +85,18 @@ namespace TicketsApp.Controllers
                 {
                     _context.Add(booking);
                     await _context.SaveChangesAsync();
-                    var eventDetails = await _context.Events
+                    var eventDetails = await _context.Events //and θεση, σειρα β θεση 15
                     .Include(e => e.Venue)
                     .FirstOrDefaultAsync(e => e.EventId == booking.EventId);
 
                     if (eventDetails != null)
                     {
-                        //await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
+
+                        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                        if (userEmail != null)
+                        {
+                            await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
+                        }
                     }
                     return RedirectToAction(nameof(Index));
                 }

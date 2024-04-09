@@ -25,10 +25,7 @@
                 <span asp-validation-for="NumberOfTickets" class="text-danger"></span>
             </div>
             <input type="hidden" name="UserId" value="@User.FindFirst(ClaimTypes.NameIdentifier)?.Value" />
-            @* <div class="form-group">
-                <label for="UserEmail" class="control-label">Email</label>
-                <input type="email" class="form-control" id="UserEmail" name="UserEmail" required />
-            </div> *@
+            @* checkbox email *@
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
