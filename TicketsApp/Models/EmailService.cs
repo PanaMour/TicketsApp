@@ -38,7 +38,7 @@
             using (var client = new SmtpClient())
             {
                 client.Connect("smtp.gmail.com", 465, true);
-                client.Authenticate("ticketsappnoreply@gmail.com", "ticketsappnoreply123");
+                client.Authenticate("ticketsappnoreply@gmail.com", "jbgk nlxx ueib iuxk");
                 await client.SendAsync(emailMessage);
                 await client.DisconnectAsync(true);
             }
