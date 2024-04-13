@@ -76,7 +76,7 @@ namespace TicketsApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets")] Booking booking, bool sendEmail = false)
+        public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets,FirstName,LastName,Phone,Email,Checkin")] Booking booking, bool sendEmail = false)
         {
             if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
             {
@@ -99,9 +99,9 @@ namespace TicketsApp.Controllers
                 {
                     _context.Add(booking);
                     await _context.SaveChangesAsync();
-                    if (sendEmail && User.FindFirstValue(ClaimTypes.Email) is string userEmail)
+                    if (sendEmail)
                     {
-                        await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
+                        await SendEmailToUser(booking.BookingId, eventDetails, booking);
                     }
                     return Json(new { success = true, message = "Booking successful!" });
                 }
@@ -212,11 +212,15 @@ namespace TicketsApp.Controllers
         {
             return _context.Bookings.Any(e => e.BookingId == id);
         }
-        private async Task SendEmailToUser(int bookingId, Event eventDetails, string userEmail)
+        private async Task SendEmailToUser(int bookingId, Event eventDetails, Booking booking)
         {
             // Generate QR code
             var qrGenerator = new QRCodeGenerator();
             var qrInfo = $"Booking ID: {bookingId}\n" +
+                 $"First Name: {booking.FirstName}\n" +
+                 $"Last Name: {booking.LastName}\n" +
+                 $"Phone: {booking.Phone}\n" +
+                 $"Email: {booking.Email}\n" +
                  $"Event: {eventDetails.EventName}\n" +
                  $"Date: {eventDetails.EventDate}\n" +
                  $"Time: {eventDetails.EventTime}\n" +
@@ -246,6 +250,10 @@ namespace TicketsApp.Controllers
                     <body>
                         <h1>Thank you for your booking</h1>
                         <p><strong>Booking ID:</strong> {bookingId}</p>
+                        <p><strong>First Name:</strong> {booking.FirstName}</p>
+                        <p><strong>Last Name:</strong> {booking.LastName}</p>
+                        <p><strong>Phone:</strong> {booking.Phone}</p>
+                        <p><strong>Email:</strong> {booking.Email}</p>
                         <p><strong>Event Name:</strong> {eventDetails.EventName}</p>
                         <p><strong>Description:</strong> {eventDetails.Description}</p>
                         <p><strong>Venue Name:</strong> {eventDetails.Venue.VenueName}</p>
@@ -258,7 +266,7 @@ namespace TicketsApp.Controllers
             var attachments = new List<MimePart> { attachment };
 
             // Send the email
-            await _emailService.SendEmailAsync(userEmail, "Your Booking Confirmation", emailContent, attachments);
+            await _emailService.SendEmailAsync(booking.Email, "Your Booking Confirmation", emailContent, attachments);
         }
 
     }

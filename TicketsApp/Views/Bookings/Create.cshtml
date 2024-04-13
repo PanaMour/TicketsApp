@@ -41,7 +41,7 @@
                     <h4>Create Booking</h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Create" method="post">
+                    <form id="bookingForm" asp-action="Create" method="post">
                         <div class="form-group mb-3">
                             <label><strong>Event:</strong></label>
                             <p>@ViewData["EventName"]</p>
@@ -51,6 +51,27 @@
                             <p>@ViewData["EventDate"]</p>
                         </div>
                         <input type="hidden" name="EventId" value="@ViewData["EventId"]" />
+                        <div class="form-group mb-3">
+                            <label asp-for="FirstName" class="form-label">First Name</label>
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="LastName" class="form-label">Last Name</label>
+                            <input asp-for="LastName" class="form-control" />
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Phone" class="form-label">Phone Number</label>
+                            <input asp-for="Phone" class="form-control" maxlength="10"/>
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label">Phone Number</label>
+                            <input asp-for="Email" value="@User.FindFirstValue(ClaimTypes.Email)" class="form-control" type="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
                         <div class="form-group mb-3">
                             <label asp-for="NumberOfTickets" class="form-label">Number of Tickets</label>
                             <input asp-for="NumberOfTickets" class="form-control" type="number" min="1" />
@@ -62,6 +83,7 @@
                                 Send email confirmation
                             </label>
                         </div>
+                        <input type="hidden" name="Checkin" value="FALSE" />
                         <input type="hidden" name="UserId" value="@User.FindFirst(ClaimTypes.NameIdentifier)?.Value" />
                         <div class="form-group">
                             <a asp-controller="Events" asp-action="Index" class="btn btn-link-custom">Back to List</a>
@@ -80,24 +102,44 @@
 
 @section Scripts {
         <script>
-        $(function() {
-            $('form').submit(function(e) {
-                e.preventDefault();
-                var formData = $(this).serialize();
+            $(function() {
+                $('#bookingForm').submit(function(e) {
+                    e.preventDefault();
 
-                $.ajax({
-                    url: this.action,
-                    type: this.method,
-                    data: formData,
-                    success: function(result) {
-                        if (!result.success) {
-                            alert(result.message);
-                        } else {
-                            window.location.href = '@Url.Action("Index")';
-                        }
+                    // Perform validation
+                    var firstName = $('#FirstName').val();
+                    var lastName = $('#LastName').val();
+                    var phone = $('#Phone').val();
+                    var email = $('#Email').val();
+                    var numberOfTickets = $('#NumberOfTickets').val();
+
+                    if (!firstName || !lastName || !phone || !email || !numberOfTickets) {
+                        alert('Please fill in all fields.');
+                        return;
                     }
+
+                    // Phone number validation
+                    var phoneRegex = /^\d{10}$/;
+                    if (!phoneRegex.test(phone)) {
+                        alert('Please enter a valid 10-digit phone number.');
+                        return;
+                    }
+
+                    // Proceed with form submission if all validations pass
+                    var formData = $(this).serialize();
+                    $.ajax({
+                        url: this.action,
+                        type: this.method,
+                        data: formData,
+                        success: function(result) {
+                            if (!result.success) {
+                                alert(result.message);
+                            } else {
+                                window.location.href = '@Url.Action("Index")';
+                            }
+                        }
+                    });
                 });
             });
-        });
         </script>
 }

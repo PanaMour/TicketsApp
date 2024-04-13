@@ -14,6 +14,11 @@ public partial class Booking
     public int? NumberOfTickets { get; set; }
 
     public string BookingDate { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string Phone { get; set; }
+    public string Email { get; set; }
+    public string Checkin { get; set; }
 
     public virtual ICollection<Attendee> Attendees { get; set; } = new List<Attendee>();
 
