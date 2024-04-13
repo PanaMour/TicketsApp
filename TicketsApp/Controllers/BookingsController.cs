@@ -76,46 +76,36 @@ namespace TicketsApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets")] Booking booking)
+        public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets")] Booking booking, bool sendEmail = false)
         {
             if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
             {
-                booking.UserId = userId; 
-                booking.BookingDate = DateTime.Now.ToString("yyyy-MM-dd"); 
+                booking.UserId = userId;
+                booking.BookingDate = DateTime.Now.ToString("yyyy-MM-dd");
+                _context.Add(booking);
+                await _context.SaveChangesAsync();
 
-                try
+                var eventDetails = await _context.Events
+                                                .Include(e => e.Venue)
+                                                .FirstOrDefaultAsync(e => e.EventId == booking.EventId);
+
+                if (eventDetails != null && sendEmail)
                 {
-                    _context.Add(booking);
-                    await _context.SaveChangesAsync();
-                    var eventDetails = await _context.Events //and θεση, σειρα β θεση 15
-                    .Include(e => e.Venue)
-                    .FirstOrDefaultAsync(e => e.EventId == booking.EventId);
-
-                    if (eventDetails != null)
+                    var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                    if (!string.IsNullOrEmpty(userEmail))
                     {
-
-                        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-                        if (userEmail != null)
-                        {
-                            await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
-                        }
+                        await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
                     }
-                    return RedirectToAction(nameof(Index));
                 }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", "There was an error saving the booking. Please try again.");
-                }
+                return RedirectToAction(nameof(Index));
             }
             else
             {
                 ModelState.AddModelError("UserId", "There was a problem retrieving your user information. Please try again.");
                 return View(booking);
             }
-
-            // If we get here, something went wrong. Include necessary ViewData or TempData for the view.
-            return View(booking);
         }
+
 
         // GET: Bookings/Edit/5
         public async Task<IActionResult> Edit(int? id)
