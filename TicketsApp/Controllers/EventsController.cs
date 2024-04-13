@@ -12,10 +12,13 @@ namespace TicketsApp.Controllers
     public class EventsController : Controller
     {
         private readonly TicketsappdbContext _context;
+        private readonly IEmailService _emailService;
 
-        public EventsController(TicketsappdbContext context)
+
+        public EventsController(TicketsappdbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // GET: Events
@@ -24,6 +27,7 @@ namespace TicketsApp.Controllers
             // Fetch all events and include related data as needed
             var allEvents = await _context.Events
                 .Include(e => e.Venue)
+                .Include(e => e.Bookings)
                 .ToListAsync();
 
             // Now that we have all events in memory, we can filter them
@@ -35,7 +39,8 @@ namespace TicketsApp.Controllers
 
             // Use LINQ to objects to filter the events
             var eventsThisMonth = allEvents
-                .Where(e => {
+                .Where(e =>
+                {
                     DateTime eventDate;
                     return DateTime.TryParse(e.EventDate, out eventDate) &&
                            eventDate >= firstDayOfMonth &&
@@ -43,7 +48,21 @@ namespace TicketsApp.Controllers
                 })
                 .ToList();
 
+            /*var eventsThisMonth = allEvents
+        .Where(e => DateTime.TryParse(e.EventDate, out var eventDate) &&
+                    eventDate >= firstDayOfMonth &&
+                    eventDate <= lastDayOfMonth &&
+                    e.Bookings.Sum(b => b.NumberOfTickets) < e.Venue.Capacity)
+        .ToList();*/
+
             return View(eventsThisMonth);
+        }
+
+        // GET: Events
+        public async Task<IActionResult> Index2()
+        {
+            var ticketsappdbContext = _context.Events.Include(a => a.Venue);
+            return View(await ticketsappdbContext.ToListAsync());
         }
 
 
@@ -84,7 +103,7 @@ namespace TicketsApp.Controllers
             {
                 _context.Add(@event);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index2));
             }
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "VenueId", @event.VenueId);
             return View(@event);
@@ -119,7 +138,7 @@ namespace TicketsApp.Controllers
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            /*if (ModelState.IsValid)
             {
                 try
                 {
@@ -137,7 +156,57 @@ namespace TicketsApp.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index2));
+            }
+            ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "VenueId", @event.VenueId);
+            return View(@event);*/
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Retrieve the original event before it's updated to check if any details relevant to bookings are changing.
+                    var originalEvent = await _context.Events.AsNoTracking().FirstOrDefaultAsync(e => e.EventId == id);
+                    bool eventDetailsChanged = originalEvent != null &&
+                        (!originalEvent.EventDate.Equals(@event.EventDate) || !originalEvent.EventTime.Equals(@event.EventTime)); // Add other checks as needed
+
+                    _context.Update(@event);
+                    await _context.SaveChangesAsync();
+
+                    // If event details that affect bookings have changed, notify the users.
+                    if (eventDetailsChanged)
+                    {
+                        // Query for bookings of this event.
+                        var bookings = _context.Bookings.Where(b => b.EventId == id).Include(b => b.User);
+
+                        foreach (var booking in bookings)
+                        {
+                            // Ensure we have a user and an email for each booking.
+                            if (booking.User != null && !string.IsNullOrEmpty(booking.User.Email))
+                            {
+                                // Create the email content based on the updated event details.
+                                string emailContent = $"Dear {booking.User.UserName},\n\n" +
+                                    $"The details for the event '{originalEvent.EventName}' have changed. " +
+                                    $"New date and time: {@event.EventDate} at {@event.EventTime}.\n\n" +
+                                    "Please contact us if you have any questions.";
+
+                                // Send an email to the user.
+                                await _emailService.SendEmailAsync(booking.User.Email, "Event Details Changed", emailContent);
+                            }
+                        }
+                    }
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!EventExists(@event.EventId))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index2));
             }
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "VenueId", @event.VenueId);
             return View(@event);
@@ -174,7 +243,7 @@ namespace TicketsApp.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index2));
         }
 
         private bool EventExists(int id)

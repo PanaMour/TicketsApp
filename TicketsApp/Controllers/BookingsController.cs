@@ -79,30 +79,39 @@ namespace TicketsApp.Controllers
             if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
             {
                 booking.UserId = userId; 
-                booking.BookingDate = DateTime.Now.ToString("yyyy-MM-dd"); 
+                booking.BookingDate = DateTime.Now.ToString("yyyy-MM-dd");
+                var eventDetails = await _context.Events
+            .Include(e => e.Venue)
+            .FirstOrDefaultAsync(e => e.EventId == booking.EventId);
 
+                if (eventDetails == null)
+                {
+                    ModelState.AddModelError("", "Event does not exist.");
+                    return View(booking);
+                }
+
+                var ticketsAlreadyBooked = _context.Bookings
+                    .Where(b => b.EventId == booking.EventId)
+                    .Sum(b => b.NumberOfTickets);
+
+                if (eventDetails.Venue.Capacity < ticketsAlreadyBooked + booking.NumberOfTickets)
+                {
+                    ModelState.AddModelError("", "Unable to book the number of tickets requested due to venue capacity limits.");
+                }
                 try
                 {
                     _context.Add(booking);
                     await _context.SaveChangesAsync();
-                    var eventDetails = await _context.Events //and θεση, σειρα β θεση 15
-                    .Include(e => e.Venue)
-                    .FirstOrDefaultAsync(e => e.EventId == booking.EventId);
 
-                    if (eventDetails != null)
+                    if (User.FindFirstValue(ClaimTypes.Email) is string userEmail)
                     {
-
-                        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-                        if (userEmail != null)
-                        {
-                            await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
-                        }
+                        await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
                     }
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "There was an error saving the booking. Please try again.");
+                    ModelState.AddModelError("", "There was an error saving the booking. Please try again. " + ex.Message);
                 }
             }
             else

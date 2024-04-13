@@ -8,24 +8,6 @@
     {
         public async Task SendEmailAsync(string to, string subject, string htmlMessage)
         {
-           /* var smtpClient = new SmtpClient("smtp.gmail.com")
-            {
-                //Port = 587,
-                Port= 465,
-                Credentials = new NetworkCredential("ticketsappnoreply@gmail.com", "ticketsappnoreply123"),
-                EnableSsl = true,
-            };
-
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress("ticketsappnoreply@google.com"),
-                Subject = subject,
-                Body = htmlMessage,
-                IsBodyHtml = true,
-            };
-            mailMessage.To.Add(to);
-
-            await smtpClient.SendMailAsync(mailMessage);*/
 
             var emailMessage = new MimeMessage();
 

@@ -20,16 +20,16 @@
     var prevMonthLink = Url.Action("Index", new { year = firstDayOfMonth.AddMonths(-1).Year, month = firstDayOfMonth.AddMonths(-1).Month });
     var nextMonthLink = Url.Action("Index", new { year = firstDayOfMonth.AddMonths(1).Year, month = firstDayOfMonth.AddMonths(1).Month });
 
-    // Group events by date
+    // Group events by date including TicketsSold and VenueCapacity
     var eventsByDate = Model
-    .Select(e => new
-    {
-        Event = e,
-        ParsedDate = DateTime.Parse(e.EventDate)
-    })
-    .GroupBy(e => e.ParsedDate.Date)
-    .ToDictionary(g => g.Key, g => g.Select(x => x.Event).ToList());
-
+        .Select(e => new {
+            Event = e,
+            ParsedDate = DateTime.Parse(e.EventDate),
+            TicketsSold = e.Bookings.Sum(b => b.NumberOfTickets),
+            VenueCapacity = e.Venue.Capacity
+        })
+        .GroupBy(e => e.ParsedDate.Date)
+        .ToDictionary(g => g.Key, g => g.ToList());
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -60,26 +60,38 @@
                 @:<tr>
             }
 
-            var hasEvent = eventsByDate.ContainsKey(day.Date);
-            var isPastEvent = hasEvent && day.Date < currentDate;
-            var isFutureEvent = hasEvent && day.Date >= currentDate;
+            bool hasEvent = eventsByDate.ContainsKey(day.Date);
+            bool isPastEvent =  hasEvent && day.Date < currentDate;
+            bool isFutureEvent = hasEvent && day.Date >= currentDate;
+            bool isOverbookedEvent = hasEvent && eventsByDate[day.Date].Any(e => e.TicketsSold >= e.VenueCapacity);
+
             <td class="@{
-            if (isPastEvent)
-            {
-                WriteLiteral("past-event");
-            }
-            else if (isFutureEvent)
-            {
-                WriteLiteral("future-event");
-            }
-        }">
+                if (isPastEvent)
+                {
+                    WriteLiteral("past-event");
+                }
+                else if (isFutureEvent)
+                {
+                    WriteLiteral("future-event");
+                } else if (isOverbookedEvent)
+                {
+                    WriteLiteral("past-event");
+                }
+            }">
                 <div class="date">@day.Day</div>
                 @if (hasEvent)
                 {
-                    foreach (var eventItem in eventsByDate[day.Date])
+                    foreach (var eventInfo in eventsByDate[day.Date])
                     {
                         <div class="event">
-                            <a asp-action="Details" asp-controller="Events" asp-route-id="@eventItem.EventId">@eventItem.EventName</a>@eventItem.EventTime                            
+                            @if (!isPastEvent && !isOverbookedEvent)
+                            {
+                                <a asp-action="Details" asp-controller="Events" asp-route-id="@eventInfo.Event.EventId">@eventInfo.Event.EventName</a> @eventInfo.Event.EventTime
+                            }
+                            else
+                            {
+                                <span>@eventInfo.Event.EventName</span> @eventInfo.Event.EventTime
+                            }
                         </div>
                     }
                 }
@@ -90,8 +102,7 @@
                 @:</tr>
             }
         }
-</tbody>
-
+    </tbody>
 </table>
 
 <style>
