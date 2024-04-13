@@ -83,8 +83,8 @@ namespace TicketsApp.Controllers
                 booking.UserId = userId; 
                 booking.BookingDate = DateTime.Now.ToString("yyyy-MM-dd");
                 var eventDetails = await _context.Events
-            .Include(e => e.Venue)
-            .FirstOrDefaultAsync(e => e.EventId == booking.EventId);
+                .Include(e => e.Venue)
+                .FirstOrDefaultAsync(e => e.EventId == booking.EventId);
 
                 if (eventDetails == null)
                 {
@@ -99,6 +99,7 @@ namespace TicketsApp.Controllers
                 if (eventDetails.Venue.Capacity < ticketsAlreadyBooked + booking.NumberOfTickets)
                 {
                     ModelState.AddModelError("", "Unable to book the number of tickets requested due to venue capacity limits.");
+                    return RedirectToAction("Administrator", "Home");
                 }
                 try
                 {
@@ -107,7 +108,10 @@ namespace TicketsApp.Controllers
 
                     if (User.FindFirstValue(ClaimTypes.Email) is string userEmail)
                     {
-                        await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
+                        if (sendEmail)
+                        {
+                            await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
+                        }
                     }
                     return RedirectToAction(nameof(Index));
                 }
@@ -121,6 +125,7 @@ namespace TicketsApp.Controllers
                 ModelState.AddModelError("UserId", "There was a problem retrieving your user information. Please try again.");
                 return View(booking);
             }
+            return View(booking);
         }
 
 
@@ -245,20 +250,20 @@ namespace TicketsApp.Controllers
 
             // Prepare email content
             var emailContent = $@"
-<html>
-<head>
-    <title>Booking Confirmation</title>
-</head>
-<body>
-    <h1>Thank you for your booking</h1>
-    <p><strong>Booking ID:</strong> {bookingId}</p>
-    <p><strong>Event Name:</strong> {eventDetails.EventName}</p>
-    <p><strong>Description:</strong> {eventDetails.Description}</p>
-    <p><strong>Venue Name:</strong> {eventDetails.Venue.VenueName}</p>
-    <img src='{eventDetails.Venue.ImageUrl}' alt='Venue Image' style='width:100%; max-width:600px; height:auto;'>
-    <p>If you have any questions, please contact us.</p>
-</body>
-</html>";
+                    <html>
+                    <head>
+                        <title>Booking Confirmation</title>
+                    </head>
+                    <body>
+                        <h1>Thank you for your booking</h1>
+                        <p><strong>Booking ID:</strong> {bookingId}</p>
+                        <p><strong>Event Name:</strong> {eventDetails.EventName}</p>
+                        <p><strong>Description:</strong> {eventDetails.Description}</p>
+                        <p><strong>Venue Name:</strong> {eventDetails.Venue.VenueName}</p>
+                        <img src='{eventDetails.Venue.ImageUrl}' alt='Venue Image' style='width:100%; max-width:600px; height:auto;'>
+                        <p>If you have any questions, please contact us.</p>
+                    </body>
+                    </html>";
 
             // List of attachments (currently just one)
             var attachments = new List<MimePart> { attachment };

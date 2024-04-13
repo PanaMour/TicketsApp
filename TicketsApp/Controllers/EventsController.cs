@@ -137,29 +137,6 @@ namespace TicketsApp.Controllers
             {
                 return NotFound();
             }
-
-            /*if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(@event);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EventExists(@event.EventId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index2));
-            }
-            ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "VenueId", @event.VenueId);
-            return View(@event);*/
             if (ModelState.IsValid)
             {
                 try
@@ -190,7 +167,7 @@ namespace TicketsApp.Controllers
                                     "Please contact us if you have any questions.";
 
                                 // Send an email to the user.
-                                await _emailService.SendEmailAsync(booking.User.Email, "Event Details Changed", emailContent);
+                                await _emailService.SendEmailAsync(booking.User.Email, "Event Details Changed", emailContent, null);
                             }
                         }
                     }
