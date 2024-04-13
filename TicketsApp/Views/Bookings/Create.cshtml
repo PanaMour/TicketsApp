@@ -79,7 +79,25 @@
 
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+        <script>
+        $(function() {
+            $('form').submit(function(e) {
+                e.preventDefault();
+                var formData = $(this).serialize();
+
+                $.ajax({
+                    url: this.action,
+                    type: this.method,
+                    data: formData,
+                    success: function(result) {
+                        if (!result.success) {
+                            alert(result.message);
+                        } else {
+                            window.location.href = '@Url.Action("Index")';
+                        }
+                    }
+                });
+            });
+        });
+        </script>
 }
