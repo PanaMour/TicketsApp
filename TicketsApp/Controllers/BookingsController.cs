@@ -80,53 +80,42 @@ namespace TicketsApp.Controllers
         {
             if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
             {
-                booking.UserId = userId; 
+                booking.UserId = userId;
                 booking.BookingDate = DateTime.Now.ToString("yyyy-MM-dd");
-                var eventDetails = await _context.Events
-                .Include(e => e.Venue)
-                .FirstOrDefaultAsync(e => e.EventId == booking.EventId);
+                var eventDetails = await _context.Events.Include(e => e.Venue).FirstOrDefaultAsync(e => e.EventId == booking.EventId);
 
                 if (eventDetails == null)
                 {
-                    ModelState.AddModelError("", "Event does not exist.");
-                    return View(booking);
+                    return Json(new { success = false, message = "Event does not exist." });
                 }
 
-                var ticketsAlreadyBooked = _context.Bookings
-                    .Where(b => b.EventId == booking.EventId)
-                    .Sum(b => b.NumberOfTickets);
-
+                var ticketsAlreadyBooked = _context.Bookings.Where(b => b.EventId == booking.EventId).Sum(b => b.NumberOfTickets);
                 if (eventDetails.Venue.Capacity < ticketsAlreadyBooked + booking.NumberOfTickets)
                 {
-                    ModelState.AddModelError("", "Unable to book the number of tickets requested due to venue capacity limits.");
-                    return RedirectToAction("Administrator", "Home");
+                    return Json(new { success = false, message = "Unable to book the number of tickets requested due to venue capacity limits." });
                 }
+
                 try
                 {
                     _context.Add(booking);
                     await _context.SaveChangesAsync();
-
-                    if (User.FindFirstValue(ClaimTypes.Email) is string userEmail)
+                    if (sendEmail && User.FindFirstValue(ClaimTypes.Email) is string userEmail)
                     {
-                        if (sendEmail)
-                        {
-                            await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
-                        }
+                        await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
                     }
-                    return RedirectToAction(nameof(Index));
+                    return Json(new { success = true, message = "Booking successful!" });
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "There was an error saving the booking. Please try again. " + ex.Message);
+                    return Json(new { success = false, message = "There was an error saving the booking. " + ex.Message });
                 }
             }
             else
             {
-                ModelState.AddModelError("UserId", "There was a problem retrieving your user information. Please try again.");
-                return View(booking);
+                return Json(new { success = false, message = "There was a problem retrieving your user information." });
             }
-            return View(booking);
         }
+
 
 
         // GET: Bookings/Edit/5
