@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TicketsApp.Models;
+using QRCoder;
+using MimeKit;
 
 namespace TicketsApp.Controllers
 {
@@ -211,19 +213,44 @@ namespace TicketsApp.Controllers
         }
         private async Task SendEmailToUser(int bookingId, Event eventDetails, string userEmail)
         {
-            var emailContent = $"Thank you for your booking.\n\n" +
-                               $"Booking ID: {bookingId}\n" +
-                               $"Event Name: {eventDetails.EventName}\n" +
-                               $"Description: {eventDetails.Description}\n" +
-                               $"Venue Name: {eventDetails.Venue.VenueName}\n" +
-                               $"Location: {eventDetails.Venue.Location}";
+            // Generate QR code
+            var qrGenerator = new QRCodeGenerator();
+            var qrCodeData = qrGenerator.CreateQrCode($"Booking ID: {bookingId}\nEvent: {eventDetails.EventName}\nDate: {eventDetails.EventDate}", QRCodeGenerator.ECCLevel.Q);
+            var qrCode = new PngByteQRCode(qrCodeData);
+            var qrCodeBytes = qrCode.GetGraphic(20);
 
-            // Use your email service to send the email
-            var emailService = new EmailService(); // Replace with your email service
-            await emailService.SendEmailAsync(userEmail, "Your Booking Confirmation", emailContent);
+            // Create MIME part for attachment
+            var attachment = new MimePart("image", "png")
+            {
+                Content = new MimeContent(new MemoryStream(qrCodeBytes), ContentEncoding.Default),
+                ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
+                ContentTransferEncoding = ContentEncoding.Base64,
+                FileName = "QRCode.png"
+            };
 
+            // Prepare email content
+            var emailContent = $@"
+<html>
+<head>
+    <title>Booking Confirmation</title>
+</head>
+<body>
+    <h1>Thank you for your booking</h1>
+    <p><strong>Booking ID:</strong> {bookingId}</p>
+    <p><strong>Event Name:</strong> {eventDetails.EventName}</p>
+    <p><strong>Description:</strong> {eventDetails.Description}</p>
+    <p><strong>Venue Name:</strong> {eventDetails.Venue.VenueName}</p>
+    <img src='{eventDetails.Venue.ImageUrl}' alt='Venue Image' style='width:100%; max-width:600px; height:auto;'>
+    <p>If you have any questions, please contact us.</p>
+</body>
+</html>";
+
+            // List of attachments (currently just one)
+            var attachments = new List<MimePart> { attachment };
+
+            // Send the email
+            await _emailService.SendEmailAsync(userEmail, "Your Booking Confirmation", emailContent, attachments);
         }
-
 
     }
 }
