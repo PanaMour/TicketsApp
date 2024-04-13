@@ -215,7 +215,15 @@ namespace TicketsApp.Controllers
         {
             // Generate QR code
             var qrGenerator = new QRCodeGenerator();
-            var qrCodeData = qrGenerator.CreateQrCode($"Booking ID: {bookingId}\nEvent: {eventDetails.EventName}\nDate: {eventDetails.EventDate}", QRCodeGenerator.ECCLevel.Q);
+            var qrInfo = $"Booking ID: {bookingId}\n" +
+                 $"Event: {eventDetails.EventName}\n" +
+                 $"Date: {eventDetails.EventDate}\n" +
+                 $"Time: {eventDetails.EventTime}\n" +
+                 $"Venue: {eventDetails.Venue.VenueName}\n" +
+                 $"Description: {eventDetails.Description}\n" +
+                 $"Location: {eventDetails.Venue.Location}\n";
+
+            var qrCodeData = qrGenerator.CreateQrCode(qrInfo, QRCodeGenerator.ECCLevel.Q);
             var qrCode = new PngByteQRCode(qrCodeData);
             var qrCodeBytes = qrCode.GetGraphic(20);
 
