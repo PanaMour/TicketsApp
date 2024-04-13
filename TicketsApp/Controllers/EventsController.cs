@@ -85,6 +85,23 @@ namespace TicketsApp.Controllers
             return View(@event);
         }
 
+        public async Task<IActionResult> Details2(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var @event = await _context.Events
+                .Include(a => a.Venue)
+                .FirstOrDefaultAsync(m => m.EventId == id);
+            if (@event == null)
+            {
+                return NotFound();
+            }
+
+            return View(@event);
+        }
         // GET: Events/Create
         public IActionResult Create()
         {
