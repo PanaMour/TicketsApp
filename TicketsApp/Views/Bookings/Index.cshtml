@@ -1,53 +1,74 @@
 ﻿@model IEnumerable<TicketsApp.Models.Booking>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Booking History";
 }
 
 <h1>Booking History</h1>
 
-@* <p>
-    <a asp-action="Create">Create New</a>
-</p> *@
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.NumberOfTickets)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.BookingDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Event)
-            </th>
-            @* <th>
-                @Html.DisplayNameFor(model => model.User)
-            </th> *@
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.NumberOfTickets)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.BookingDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Event.EventName)
-            </td>
-           @*  <td>
-                @Html.DisplayFor(modelItem => item.User.UserId)
-            </td> *@
-            @* <td>
-                <a asp-action="Edit" asp-route-id="@item.BookingId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.BookingId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.BookingId">Delete</a>
-            </td> *@
-        </tr>
-}
-    </tbody>
-</table>
+<div class="container mt-4">
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="thead-custom">
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.NumberOfTickets)</th>
+                    <th>@Html.DisplayNameFor(model => model.BookingDate)</th>
+                    <th>@Html.DisplayNameFor(model => model.Event.EventName)</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.NumberOfTickets)</td>
+                                <td>@Html.DisplayFor(modelItem => item.BookingDate)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Event.EventName)</td>
+                                <td>
+                            @if (item.Checkin == "TRUE")
+                            {
+                                                <span class="badge badge-success">Already Checked In</span>
+                            }
+                            else
+                            {
+                                                <span class="badge badge-warning">Not Checked In</span>
+                            }
+                                </td>
+                                <td>
+                            @if (item.Checkin == "FALSE")
+                            {
+                                                <button onclick="location.href='@Url.Action("CheckIn", "Bookings", new { id = item.BookingId })'" class="btn btn-primary btn-sm">Check-In</button>
+                            }
+                                </td>
+                            </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .thead-custom th {
+        background-color: #0FC2C0;
+        color: #023535;
+    }
+    .badge-success {
+        background-color: #28a745;
+    }
+    .badge-warning {
+        background-color: #ffc107;
+    }
+    .btn-primary {
+        background-color: #0CABA8;
+        border-color: #008F8C;
+        color: #ffffff;
+    }
+    .btn-primary:hover {
+        background-color: #008F8C;
+        border-color: #007B8A;
+    }
+    .container {
+        max-width: 1200px;
+    }
+</style>

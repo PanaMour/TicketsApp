@@ -269,5 +269,106 @@ namespace TicketsApp.Controllers
             await _emailService.SendEmailAsync(booking.Email, "Your Booking Confirmation", emailContent, attachments);
         }
 
+        /*public async Task<IActionResult> CheckIn(int id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Event)
+                .Include(b => b.User)
+                .FirstOrDefaultAsync(m => m.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            // Check if already checked-in to prevent infinite loop if someone refreshes the check-in confirmation page
+            if (booking.Checkin == "TRUE")
+            {
+                TempData["Message"] = "Already checked in.";
+                return View("Checkin", new { id = booking.BookingId });
+            }
+
+            booking.Checkin = "TRUE";
+            _context.Update(booking);
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = "Check-in successful.";
+            return View("Checkin", new { id = booking.BookingId }); // Redirect to a stable page
+        }*/
+        public async Task<IActionResult> CheckIn(int id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Event)
+                    .ThenInclude(e => e.Venue) // Ensure the Venue is also included
+                .Include(b => b.User)
+                .FirstOrDefaultAsync(m => m.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            if (booking.Checkin == "TRUE")
+            {
+                TempData["Message"] = "Already checked in.";
+                return RedirectToAction("CheckinConfirmation", new { id = booking.BookingId });
+            }
+
+            booking.Checkin = "TRUE";
+            _context.Update(booking);
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = "Check-in successful.";
+            return RedirectToAction("CheckinConfirmation", new { id = booking.BookingId });
+        }
+
+        public IActionResult CheckinConfirmation(int id)
+        {
+            var booking = _context.Bookings
+                .Include(b => b.Event)
+                    .ThenInclude(e => e.Venue) // Again, include Venue to ensure it's available in the view
+                .Include(b => b.User)
+                .FirstOrDefault(m => m.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            return View("Checkin", booking);  // Assuming 'Checkin' is the view that shows the check-in details
+        }
+
+        public IActionResult GenerateQRCode(int id)
+        {
+            var booking = _context.Bookings
+                .Include(b => b.Event)
+                    .ThenInclude(e => e.Venue)
+                .FirstOrDefault(b => b.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            // Construct the data string for QR code
+            string qrCodeData = $"Booking ID: {booking.BookingId}\n" +
+                                $"First Name: {booking.FirstName}\n" +
+                                $"Last Name: {booking.LastName}\n" +
+                                $"Phone: {booking.Phone}\n" +
+                                $"Email: {booking.Email}\n" +
+                                $"Event: {booking.Event.EventName}\n" +
+                                $"Date: {booking.Event.EventDate}\n" +
+                                $"Time: {booking.Event.EventTime}\n" +
+                                $"Venue: {booking.Event.Venue.VenueName}";
+
+            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+            QRCodeData qrCodeGeneratorData = qrGenerator.CreateQrCode(qrCodeData, QRCodeGenerator.ECCLevel.Q);
+            PngByteQRCode qrCode = new PngByteQRCode(qrCodeGeneratorData);
+            byte[] qrCodeImage = qrCode.GetGraphic(20);
+
+            return File(qrCodeImage, "image/png");
+        }
+
+
     }
 }
