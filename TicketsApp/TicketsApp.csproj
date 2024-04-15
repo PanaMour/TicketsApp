@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <None Include="wwwroot\images\google_icon.svg" />
+    <None Include="wwwroot\images\tickets.png" />
   </ItemGroup>
 
 </Project>

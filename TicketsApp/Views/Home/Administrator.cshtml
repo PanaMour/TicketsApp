@@ -3,7 +3,23 @@
     Layout = "_AdministratorLayout";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    .image-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 500px;
+        }
+</style>
+<div class="container">
+    <div class="text-center">
+        <h1 class="display-4">Welcome <span style="color: blue;">@User.Identity?.Name</span></h1>
+    </div>
+    <br>
+    <div class="image-container">
+        <img src="~/images/tickets.png" alt="Tickets Image" class="img-fluid">
+    </div>
 </div>
