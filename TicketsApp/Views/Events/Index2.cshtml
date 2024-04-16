@@ -1,64 +1,98 @@
 ﻿@model IEnumerable<TicketsApp.Models.Event>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Manage Events";
     Layout = "_OrganizerLayout";
 }
 
-<h1>Index</h1>
+<h1>Events List</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EventName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EventDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EventTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Venue)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.EventName)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Description)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.EventDate)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.EventTime)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Venue.VenueName)
-                </td>
-                <td>
-                    @if (DateTime.TryParse(item.EventDate, out var eventDate) && eventDate > DateTime.Now)
-                    {
-                        <a asp-action="Edit" asp-route-id="@item.EventId">Edit</a>
-                    }
-                    <a asp-action="Details2" asp-route-id="@item.EventId">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.EventId">Delete</a>
-                </td>
-            </tr>
+<div class="container mt-4">
+    <div class="mb-3 text-right">
+        <button onclick="location.href='@Url.Action("Create")'" class="btn btn-primary">Create New</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="thead-custom">
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.EventName)</th>
+                    <th>@Html.DisplayNameFor(model => model.Description)</th>
+                    <th>@Html.DisplayNameFor(model => model.EventDate)</th>
+                    <th>@Html.DisplayNameFor(model => model.EventTime)</th>
+                    <th>@Html.DisplayNameFor(model => model.Venue.VenueName)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(modelItem => item.EventName)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Description)</td>
+                        <td>@Html.DisplayFor(modelItem => item.EventDate)</td>
+                        <td>@Html.DisplayFor(modelItem => item.EventTime)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Venue.VenueName)</td>
+                        <td>
+                            @if (DateTime.TryParse(item.EventDate, out var eventDate) && eventDate > DateTime.Now)
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.EventId" class="btn btn-secondary btn-sm">Edit</a>
+                            }
+                            <a asp-action="Details2" asp-route-id="@item.EventId" class="btn btn-info btn-sm">Details</a>
+                            <a asp-action="Delete" asp-route-id="@item.EventId" class="btn btn-danger btn-sm">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<style>
+    .thead-custom th {
+        background-color: #0FC2C0;
+        color: #023535;
+    }
+
+    .btn-primary {
+        background-color: #0CABA8;
+        border-color: #008F8C;
+        color: #ffffff;
+    }
+
+        .btn-primary:hover {
+            background-color: #008F8C;
+            border-color: #007B8A;
         }
-    </tbody>
-</table>
+
+    .btn-secondary, .btn-info, .btn-danger {
+        color: #ffffff;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+        .btn-secondary:hover, .btn-info:hover, .btn-danger:hover {
+            opacity: 0.85;
+        }
+
+    .container {
+        max-width: 1200px;
+    }
+
+    .table-responsive {
+        margin-bottom: 40px;
+    }
+</style>

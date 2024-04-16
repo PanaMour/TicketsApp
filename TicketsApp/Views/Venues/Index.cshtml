@@ -1,47 +1,89 @@
 ﻿@model IEnumerable<TicketsApp.Models.Venue>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Venues";
 }
 
-<h1>Index</h1>
+<h1>Venue List</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.VenueName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Location)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Capacity)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.VenueName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Location)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Capacity)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.VenueId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.VenueId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.VenueId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div class="container mt-4">
+    <div class="mb-3 text-right">
+        <button onclick="location.href='@Url.Action("Create")'" class="btn btn-primary">Create New</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="thead-custom">
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.VenueName)</th>
+                    <th>@Html.DisplayNameFor(model => model.Location)</th>
+                    <th>@Html.DisplayNameFor(model => model.Capacity)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(modelItem => item.VenueName)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Location)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Capacity)</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.VenueId" class="btn btn-secondary btn-sm">Edit</a>
+                            <a asp-action="Details" asp-route-id="@item.VenueId" class="btn btn-info btn-sm">Details</a>
+                            <a asp-action="Delete" asp-route-id="@item.VenueId" class="btn btn-danger btn-sm">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .thead-custom th {
+        background-color: #0FC2C0;
+        color: #023535;
+    }
+
+    .btn-primary {
+        background-color: #0CABA8;
+        border-color: #008F8C;
+        color: #ffffff;
+    }
+
+        .btn-primary:hover {
+            background-color: #008F8C;
+            border-color: #007B8A;
+        }
+
+    .btn-secondary, .btn-info, .btn-danger {
+        color: #ffffff;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+        .btn-secondary:hover, .btn-info:hover, .btn-danger:hover {
+            opacity: 0.85;
+        }
+
+    .container {
+        max-width: 1200px;
+    }
+
+    .table-responsive {
+        margin-bottom: 40px;
+    }
+</style>

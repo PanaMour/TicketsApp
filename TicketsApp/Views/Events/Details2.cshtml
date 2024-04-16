@@ -1,49 +1,64 @@
 ﻿@model TicketsApp.Models.Event
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Event Details";
     Layout = "_OrganizerLayout";
 }
 
-<h1>Details</h1>
+<h1>Event Details</h1>
 
-<div>
-    <h4>Event</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EventName)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EventName)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EventDate)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EventDate)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EventTime)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EventTime)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Venue)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Venue.VenueId)
-        </dd>
-    </dl>
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header card-header-custom">
+            <h4 class="mb-0">Event Information</h4>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-4">Event Name:</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.EventName)</dd>
+                <dt class="col-sm-4">Description:</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.Description)</dd>
+                <dt class="col-sm-4">Date:</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.EventDate)</dd>
+                <dt class="col-sm-4">Time:</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.EventTime)</dd>
+                <dt class="col-sm-4">Venue Name:</dt>
+                <dd class="col-sm-8">@Html.DisplayFor(model => model.Venue.VenueName)</dd>
+            </dl>
+        </div>
+        <div class="card-footer text-center">
+            <a asp-action="Edit" asp-route-id="@Model?.EventId" class="btn btn-primary">Edit</a>
+            <a asp-action="Index2" class="btn btn-link">Back to List</a>
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.EventId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+<style>
+    .card-header-custom {
+        background-color: #0FC2C0;
+        color: #023535;
+    }
+
+    .btn-primary {
+        background-color: #0CABA8;
+        border-color: #008F8C;
+        color: #ffffff;
+    }
+
+        .btn-primary:hover {
+            background-color: #008F8C;
+            border-color: #007B8A;
+        }
+
+    .btn-link {
+        color: #0CABA8;
+    }
+
+        .btn-link:hover {
+            color: #008F8C;
+        }
+
+    .container {
+        max-width: 800px;
+    }
+</style>

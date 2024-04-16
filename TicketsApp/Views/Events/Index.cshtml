@@ -20,7 +20,7 @@
     var prevMonthLink = Url.Action("Index", new { year = firstDayOfMonth.AddMonths(-1).Year, month = firstDayOfMonth.AddMonths(-1).Month });
     var nextMonthLink = Url.Action("Index", new { year = firstDayOfMonth.AddMonths(1).Year, month = firstDayOfMonth.AddMonths(1).Month });
 
-    // Group events by date including TicketsSold and VenueCapacity
+    // Group events by date including Tickets sold and VenueCapacity
     var eventsByDate = Model
         .Select(e => new {
             Event = e,
