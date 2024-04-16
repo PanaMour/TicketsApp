@@ -1,0 +1,105 @@
+﻿@model TicketsApp.Models.Booking
+
+@{
+    ViewData["Title"] = "Check-In Details";
+    Layout = "_Layout1";
+}
+
+<style>
+    .card {
+        margin-top: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border-radius: 8px;
+    }
+    .card-header-custom {
+        background-color: #0FC2C0;
+        color: #023535;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding: 10px 15px;
+    }
+    .card-body-custom {
+        background-color: #f8f9fa;
+        padding: 15px;
+    }
+    .card-footer-custom {
+        background-color: #015958;
+        color: #ffffff;
+        text-align: center;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        padding: 10px 15px;
+    }
+    .btn-back-to-events {
+        color: #ffffff;
+        background-color: #015958;
+        border: none;
+    }
+    .btn-back-to-events:hover {
+        background-color: #023535;
+    }
+    .qr-code-img {
+        width: 100%;
+        max-width: 160px;
+        height: auto;
+        display: block;
+        margin: 10px auto;
+        float: left;
+    }
+    .detail-label {
+        font-weight: bold;
+    }
+</style>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow" style="border-radius: 0.5rem;">
+                <div class="card-header card-header-custom text-center" style="border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;">
+                    <h3 class="card-title mb-0">Check-In Details</h3>
+                </div>
+                <div class="card-body card-body-custom">
+                    <dl class="row">
+                        <dt class="col-sm-4">Booking ID:</dt>
+                        <dd class="col-sm-8">@Model.BookingId</dd>
+                        <dt class="col-sm-4">First Name:</dt>
+                        <dd class="col-sm-8">@Model.FirstName</dd>
+                        <dt class="col-sm-4">Last Name:</dt>
+                        <dd class="col-sm-8">@Model.LastName</dd>
+                        <dt class="col-sm-4">Email:</dt>
+                        <dd class="col-sm-8">@Model.Email</dd>
+                        <dt class="col-sm-4">Phone:</dt>
+                        <dd class="col-sm-8">@Model.Phone</dd>
+                        <dt class="col-sm-4">Event Name:</dt>
+                        <dd class="col-sm-8">@Model.Event.EventName</dd>
+                        <dt class="col-sm-4">Description:</dt>
+                        <dd class="col-sm-8">@Model.Event.Description</dd>
+                        <dt class="col-sm-4">Date:</dt>
+                        <dd class="col-sm-8">@Model.Event.EventDate</dd>
+                        <dt class="col-sm-4">Time:</dt>
+                        <dd class="col-sm-8">@Model.Event.EventTime</dd>
+                        <dt class="col-sm-4">Venue Name:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.Event != null && Model.Event.Venue != null)
+                            {
+                                @Html.DisplayFor(model => model.Event.Venue.VenueName)
+                            }
+                            else
+                            {
+                                <span>Not Available</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4">QR Code:</dt>
+                        <dd class="col-sm-8">
+                            <img src="@Url.Action("GenerateQRCode", "Bookings", new { id = Model.BookingId })" alt="QR Code" class="qr-code-img"/>
+                        </dd>
+                    </dl>
+                </div>
+                <div class="card-footer card-footer-custom text-center">
+                    <a asp-action="Index" asp-controller="Bookings" class="btn btn-back-to-events">Back to Bookings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -76,7 +76,7 @@ namespace TicketsApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets")] Booking booking, bool sendEmail = false)
+        public async Task<IActionResult> Create([Bind("EventId,NumberOfTickets,FirstName,LastName,Phone,Email,Checkin")] Booking booking, bool sendEmail = false)
         {
             if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
             {
@@ -99,9 +99,9 @@ namespace TicketsApp.Controllers
                 {
                     _context.Add(booking);
                     await _context.SaveChangesAsync();
-                    if (sendEmail && User.FindFirstValue(ClaimTypes.Email) is string userEmail)
+                    if (sendEmail)
                     {
-                        await SendEmailToUser(booking.BookingId, eventDetails, userEmail);
+                        await SendEmailToUser(booking.BookingId, eventDetails, booking);
                     }
                     return Json(new { success = true, message = "Booking successful!" });
                 }
@@ -212,11 +212,15 @@ namespace TicketsApp.Controllers
         {
             return _context.Bookings.Any(e => e.BookingId == id);
         }
-        private async Task SendEmailToUser(int bookingId, Event eventDetails, string userEmail)
+        private async Task SendEmailToUser(int bookingId, Event eventDetails, Booking booking)
         {
             // Generate QR code
             var qrGenerator = new QRCodeGenerator();
             var qrInfo = $"Booking ID: {bookingId}\n" +
+                 $"First Name: {booking.FirstName}\n" +
+                 $"Last Name: {booking.LastName}\n" +
+                 $"Phone: {booking.Phone}\n" +
+                 $"Email: {booking.Email}\n" +
                  $"Event: {eventDetails.EventName}\n" +
                  $"Date: {eventDetails.EventDate}\n" +
                  $"Time: {eventDetails.EventTime}\n" +
@@ -246,6 +250,10 @@ namespace TicketsApp.Controllers
                     <body>
                         <h1>Thank you for your booking</h1>
                         <p><strong>Booking ID:</strong> {bookingId}</p>
+                        <p><strong>First Name:</strong> {booking.FirstName}</p>
+                        <p><strong>Last Name:</strong> {booking.LastName}</p>
+                        <p><strong>Phone:</strong> {booking.Phone}</p>
+                        <p><strong>Email:</strong> {booking.Email}</p>
                         <p><strong>Event Name:</strong> {eventDetails.EventName}</p>
                         <p><strong>Description:</strong> {eventDetails.Description}</p>
                         <p><strong>Venue Name:</strong> {eventDetails.Venue.VenueName}</p>
@@ -258,8 +266,109 @@ namespace TicketsApp.Controllers
             var attachments = new List<MimePart> { attachment };
 
             // Send the email
-            await _emailService.SendEmailAsync(userEmail, "Your Booking Confirmation", emailContent, attachments);
+            await _emailService.SendEmailAsync(booking.Email, "Your Booking Confirmation", emailContent, attachments);
         }
+
+        /*public async Task<IActionResult> CheckIn(int id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Event)
+                .Include(b => b.User)
+                .FirstOrDefaultAsync(m => m.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            // Check if already checked-in to prevent infinite loop if someone refreshes the check-in confirmation page
+            if (booking.Checkin == "TRUE")
+            {
+                TempData["Message"] = "Already checked in.";
+                return View("Checkin", new { id = booking.BookingId });
+            }
+
+            booking.Checkin = "TRUE";
+            _context.Update(booking);
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = "Check-in successful.";
+            return View("Checkin", new { id = booking.BookingId }); // Redirect to a stable page
+        }*/
+        public async Task<IActionResult> CheckIn(int id)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Event)
+                    .ThenInclude(e => e.Venue) // Ensure the Venue is also included
+                .Include(b => b.User)
+                .FirstOrDefaultAsync(m => m.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            if (booking.Checkin == "TRUE")
+            {
+                TempData["Message"] = "Already checked in.";
+                return RedirectToAction("CheckinConfirmation", new { id = booking.BookingId });
+            }
+
+            booking.Checkin = "TRUE";
+            _context.Update(booking);
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = "Check-in successful.";
+            return RedirectToAction("CheckinConfirmation", new { id = booking.BookingId });
+        }
+
+        public IActionResult CheckinConfirmation(int id)
+        {
+            var booking = _context.Bookings
+                .Include(b => b.Event)
+                    .ThenInclude(e => e.Venue) // Again, include Venue to ensure it's available in the view
+                .Include(b => b.User)
+                .FirstOrDefault(m => m.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            return View("Checkin", booking);  // Assuming 'Checkin' is the view that shows the check-in details
+        }
+
+        public IActionResult GenerateQRCode(int id)
+        {
+            var booking = _context.Bookings
+                .Include(b => b.Event)
+                    .ThenInclude(e => e.Venue)
+                .FirstOrDefault(b => b.BookingId == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            // Construct the data string for QR code
+            string qrCodeData = $"Booking ID: {booking.BookingId}\n" +
+                                $"First Name: {booking.FirstName}\n" +
+                                $"Last Name: {booking.LastName}\n" +
+                                $"Phone: {booking.Phone}\n" +
+                                $"Email: {booking.Email}\n" +
+                                $"Event: {booking.Event.EventName}\n" +
+                                $"Date: {booking.Event.EventDate}\n" +
+                                $"Time: {booking.Event.EventTime}\n" +
+                                $"Venue: {booking.Event.Venue.VenueName}";
+
+            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+            QRCodeData qrCodeGeneratorData = qrGenerator.CreateQrCode(qrCodeData, QRCodeGenerator.ECCLevel.Q);
+            PngByteQRCode qrCode = new PngByteQRCode(qrCodeGeneratorData);
+            byte[] qrCodeImage = qrCode.GetGraphic(20);
+
+            return File(qrCodeImage, "image/png");
+        }
+
 
     }
 }

@@ -158,32 +158,27 @@ namespace TicketsApp.Controllers
             {
                 try
                 {
-                    // Retrieve the original event before it's updated to check if any details relevant to bookings are changing.
                     var originalEvent = await _context.Events.AsNoTracking().FirstOrDefaultAsync(e => e.EventId == id);
                     bool eventDetailsChanged = originalEvent != null &&
-                        (!originalEvent.EventDate.Equals(@event.EventDate) || !originalEvent.EventTime.Equals(@event.EventTime)); // Add other checks as needed
+                        (!originalEvent.EventDate.Equals(@event.EventDate) || !originalEvent.EventTime.Equals(@event.EventTime));
 
                     _context.Update(@event);
                     await _context.SaveChangesAsync();
 
-                    // If event details that affect bookings have changed, notify the users.
                     if (eventDetailsChanged)
                     {
-                        // Query for bookings of this event.
                         var bookings = _context.Bookings.Where(b => b.EventId == id).Include(b => b.User);
 
                         foreach (var booking in bookings)
                         {
-                            // Ensure we have a user and an email for each booking.
                             if (booking.User != null && !string.IsNullOrEmpty(booking.User.Email))
                             {
-                                // Create the email content based on the updated event details.
-                                string emailContent = $"Dear {booking.User.UserName},\n\n" +
-                                    $"The details for the event '{originalEvent.EventName}' have changed. " +
-                                    $"New date and time: {@event.EventDate} at {@event.EventTime}.\n\n" +
-                                    "Please contact us if you have any questions.";
+                                string emailContent = $@"
+                                    <p>Dear {booking.User.UserName},</p>
+                                    <p>The details for the event '{originalEvent.EventName}' have changed.</p>
+                                    <p>New date and time: {@event.EventDate} at {@event.EventTime}.</p>
+                                    <p>Please contact us if you have any questions.</p>";
 
-                                // Send an email to the user.
                                 await _emailService.SendEmailAsync(booking.User.Email, "Event Details Changed", emailContent, null);
                             }
                         }
