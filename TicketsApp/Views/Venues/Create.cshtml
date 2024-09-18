@@ -12,7 +12,8 @@
             <h4 class="mb-0">Venue Details</h4>
         </div>
         <div class="card-body">
-            <form asp-action="Create" class="form-horizontal">
+            <form asp-action="Create" enctype="multipart/form-data" class="form-horizontal">
+
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="form-group">
                     <label asp-for="VenueName" class="control-label">Venue Name</label>
@@ -29,6 +30,11 @@
                     <input asp-for="Capacity" type="number" class="form-control" placeholder="Enter capacity" />
                     <span asp-validation-for="Capacity" class="text-danger"></span>
                 </div>
+                <div class="form-group">
+                    <label for="venueImage" class="control-label">Venue Image</label>
+                    <input type="file" name="VenueImage" class="form-control" />
+                </div>
+
                 <br />
                 <div class="form-group text-center">
                     <button type="submit" class="btn btn-primary">Create</button>

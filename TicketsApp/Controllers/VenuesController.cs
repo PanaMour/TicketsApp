@@ -6,16 +6,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TicketsApp.Models;
+using Azure.Storage.Blobs;
+using System.IO;
+
 
 namespace TicketsApp.Controllers
 {
     public class VenuesController : Controller
     {
         private readonly TicketsappdbContext _context;
-
-        public VenuesController(TicketsappdbContext context)
+        private readonly IConfiguration _configuration;
+        public VenuesController(TicketsappdbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // GET: Venues
@@ -53,14 +57,60 @@ namespace TicketsApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("VenueId,VenueName,Location,Capacity")] Venue venue)
+        public async Task<IActionResult> Create([Bind("VenueId,VenueName,Location,Capacity")] Venue venue, IFormFile VenueImage)
         {
+
             if (ModelState.IsValid)
             {
-                _context.Add(venue);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+
+                if (VenueImage != null && VenueImage.Length > 0)
+                {
+                    try
+                    {
+                        string connectionString = _configuration["AzureStorage:ConnectionString"];
+                        BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
+
+                        var containerClient = blobServiceClient.GetBlobContainerClient("venue-images");
+                        await containerClient.CreateIfNotExistsAsync();
+
+                        string fileName = Path.GetFileName(VenueImage.FileName);
+                        var blobClient = containerClient.GetBlobClient(fileName);
+
+
+                        using (var stream = VenueImage.OpenReadStream())
+                        {
+                            await blobClient.UploadAsync(stream, overwrite: true);
+                        }
+
+
+                        venue.ImageUrl = blobClient.Uri.ToString();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error uploading image: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("No image uploaded or image is empty.");
+                }
+
+                try
+                {
+                    _context.Add(venue);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error saving to the database: {ex.Message}");
+                }
             }
+            else
+            {
+                Console.WriteLine("Model state is invalid.");
+            }
+
             return View(venue);
         }
 

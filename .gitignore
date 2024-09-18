@@ -373,6 +373,10 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+# Ignore appsettings.json and appsettings.Production.json to avoid committing sensitive data
+appsettings.json
+appsettings.Production.json
+
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
