@@ -82,6 +82,23 @@
             }
         }
 
+        document.getElementById("venueImage").addEventListener("change", async function () {
+            const fileInput = document.getElementById('venueImage');
+            const file = fileInput.files[0];
+
+            if (file) {
+                console.log(`File selected: ${file.name}`);
+
+                const sasTokenUrl = await fetchSasTokenForFileUpload(file.name);
+
+                if (sasTokenUrl) {
+                    console.log('SAS Token URL:', sasTokenUrl);
+                }
+            } else {
+                console.log('No file selected.');
+            }
+        });
+
         document.getElementById("submitBtn").addEventListener("click", async function () {
             const fileInput = document.getElementById('venueImage');
             const file = fileInput.files[0];
@@ -130,7 +147,6 @@
                 const response = await fetch(`/Venues/GetUploadSasToken?blobName=${fileName}`);
                 const data = await response.json();
                 const sasTokenUrl = data.sasToken;
-                console.log('SAS Token URL:', sasTokenUrl);
                 return sasTokenUrl;
             } catch (error) {
                 console.error('Error fetching SAS token:', error);
@@ -153,7 +169,6 @@
         }
 
         let timerInterval = setInterval(updateTimer, 1000);
-
 
     </script>
 
