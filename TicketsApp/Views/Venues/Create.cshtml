@@ -58,6 +58,86 @@
 
     <script>
         let sasTokenExpiryTime = 30;
+
+        async function retryAsync(operation, maxRetries, delay, fileName) {
+            let attempts = 0;
+            while (attempts < maxRetries) {
+                try {
+                    const sasTokenUrl = await fetchSasTokenForFileUpload(fileName);
+                    if (!sasTokenUrl) {
+                        throw new Error('Failed to retrieve SAS token.');
+                    }
+
+                    await operation(sasTokenUrl);
+                    return;
+                } catch (error) {
+                    attempts++;
+                    console.log(`Retry ${attempts} failed. Retrying in ${delay / 1000} seconds...`);
+
+                    if (attempts === maxRetries) {
+                        throw error;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        document.getElementById("submitBtn").addEventListener("click", async function () {
+            const fileInput = document.getElementById('venueImage');
+            const file = fileInput.files[0];
+
+            if (file) {
+                try {
+                    const uploadOperation = async (sasTokenUrl) => {
+                        const uploadResponse = await fetch(sasTokenUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'x-ms-blob-type': 'BlockBlob'
+                            },
+                            body: file
+                        });
+
+                        if (!uploadResponse.ok) {
+                            throw new Error('Failed to upload file');
+                        }
+
+                        console.log('File uploaded successfully');
+
+                        const fileUrl = sasTokenUrl.split("?")[0];
+
+                        const imageUrlInput = document.createElement('input');
+                        imageUrlInput.type = 'hidden';
+                        imageUrlInput.name = 'imageUrl';
+                        imageUrlInput.value = fileUrl;
+                        document.getElementById('venueForm').appendChild(imageUrlInput);
+
+                        document.getElementById('venueForm').submit();
+                    };
+
+                    await retryAsync(uploadOperation, maxRetries = 3, delay = 5000, file.name);
+
+                } catch (error) {
+                    console.error('Error during upload', error);
+                    alert('Upload failed after 3 retries.');
+                }
+            } else {
+                console.log('No file selected.');
+            }
+        });
+
+        async function fetchSasTokenForFileUpload(fileName) {
+            try {
+                const response = await fetch(`/Venues/GetUploadSasToken?blobName=${fileName}`);
+                const data = await response.json();
+                const sasTokenUrl = data.sasToken;
+                console.log('SAS Token URL:', sasTokenUrl);
+                return sasTokenUrl;
+            } catch (error) {
+                console.error('Error fetching SAS token:', error);
+                return null;
+            }
+        }
+
         function updateTimer() {
             const timerElement = document.getElementById('tokenTimer');
             const minutes = Math.floor(sasTokenExpiryTime / 60);
@@ -71,67 +151,12 @@
                 alert('The SAS token has expired. Please refresh the page to generate a new one.');
             }
         }
-        async function fetchSasTokenForFileUpload(fileName) {
-            try {
-                const response = await fetch(`/Venues/GetUploadSasToken?blobName=${fileName}`);
-                const data = await response.json();
 
-                const sasTokenUrl = data.sasToken;
-                console.log('SAS Token URL:', sasTokenUrl);
-
-                return sasTokenUrl;
-            } catch (error) {
-                console.error('Error fetching SAS token:', error);
-                return null;
-            }
-        }
         let timerInterval = setInterval(updateTimer, 1000);
-        document.getElementById("venueImage").addEventListener("change", async function () {
-            const fileInput = document.getElementById('venueImage');
-            const file = fileInput.files[0];
 
-            if (file) {
-                console.log(`File selected: ${file.name}`);
-
-                const sasTokenUrl = await fetchSasTokenForFileUpload(file.name);
-
-                if (sasTokenUrl) {
-                    document.getElementById("submitBtn").addEventListener("click", async function () {
-
-                        try {
-                            const uploadResponse = await fetch(sasTokenUrl, {
-                                method: 'PUT',
-                                headers: {
-                                    'x-ms-blob-type': 'BlockBlob'
-                                },
-                                body: file
-                            });
-
-                            if (uploadResponse.ok) {
-                                console.log('File uploaded successfully');
-
-                                const fileUrl = sasTokenUrl.split("?")[0];
-
-                                const imageUrlInput = document.createElement('input');
-                                imageUrlInput.type = 'hidden';
-                                imageUrlInput.name = 'imageUrl';
-                                imageUrlInput.value = fileUrl;
-                                document.getElementById('venueForm').appendChild(imageUrlInput);
-
-                                const form = document.getElementById('venueForm');
-                                form.submit();
-                            } else {
-                                console.error('Failed to upload file');
-                            }
-                        } catch (error) {
-                            console.error('Error during upload', error);
-                        }
-                    });
-                }
-            }
-        });
 
     </script>
+
 }
 
 <style>

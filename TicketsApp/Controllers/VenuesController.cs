@@ -66,6 +66,29 @@ namespace TicketsApp.Controllers
             return Json(new { sasToken });
 
         }
+        public static async Task RetryAsync(Func<Task> operation, int maxRetries, TimeSpan delay)
+        {
+            int attempts = 0;
+            while (attempts < maxRetries)
+            {
+                try
+                {
+                    await operation();
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    attempts++;
+                    if (attempts == maxRetries)
+                    {
+                        throw;
+                    }
+                    Console.WriteLine($"Retry {attempts} failed. Retrying in {delay.Seconds} seconds...");
+                    await Task.Delay(delay);
+                }
+            }
+        }
+
         // GET: Venues
         public async Task<IActionResult> Index()
         {
@@ -107,7 +130,6 @@ namespace TicketsApp.Controllers
             {
                 try
                 {
-                    // Save the image URL that was uploaded via SAS token from the client
                     if (!string.IsNullOrEmpty(imageUrl))
                     {
                         venue.ImageUrl = imageUrl;
@@ -117,7 +139,6 @@ namespace TicketsApp.Controllers
                         Console.WriteLine("No image uploaded.");
                     }
 
-                    // Save venue details to the database
                     _context.Add(venue);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
