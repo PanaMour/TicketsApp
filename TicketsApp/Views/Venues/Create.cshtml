@@ -12,8 +12,7 @@
             <h4 class="mb-0">Venue Details</h4>
         </div>
         <div class="card-body">
-            <form asp-action="Create" enctype="multipart/form-data" class="form-horizontal">
-
+            <form id="venueForm" asp-action="Create" enctype="multipart/form-data" class="form-horizontal">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="form-group">
                     <label asp-for="VenueName" class="control-label">Venue Name</label>
@@ -32,12 +31,17 @@
                 </div>
                 <div class="form-group">
                     <label for="venueImage" class="control-label">Venue Image</label>
-                    <input type="file" name="VenueImage" class="form-control" />
+                    <input type="file" id="venueImage" name="VenueImage" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label for="tokenTimer" class="control-label">SAS Token Expires In:</label>
+                    <span id="tokenTimer">0:30</span>
                 </div>
 
                 <br />
                 <div class="form-group text-center">
-                    <button type="submit" class="btn btn-primary">Create</button>
+                    <button type="button" id="submitBtn" class="btn btn-primary">Create</button>
                 </div>
             </form>
         </div>
@@ -51,6 +55,83 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        let sasTokenExpiryTime = 30;
+        function updateTimer() {
+            const timerElement = document.getElementById('tokenTimer');
+            const minutes = Math.floor(sasTokenExpiryTime / 60);
+            const seconds = sasTokenExpiryTime % 60;
+            timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            if (sasTokenExpiryTime > 0) {
+                sasTokenExpiryTime--;
+            } else {
+                clearInterval(timerInterval);
+                alert('The SAS token has expired. Please refresh the page to generate a new one.');
+            }
+        }
+        async function fetchSasTokenForFileUpload(fileName) {
+            try {
+                const response = await fetch(`/Venues/GetUploadSasToken?blobName=${fileName}`);
+                const data = await response.json();
+
+                const sasTokenUrl = data.sasToken;
+                console.log('SAS Token URL:', sasTokenUrl);
+
+                return sasTokenUrl;
+            } catch (error) {
+                console.error('Error fetching SAS token:', error);
+                return null;
+            }
+        }
+        let timerInterval = setInterval(updateTimer, 1000);
+        document.getElementById("venueImage").addEventListener("change", async function () {
+            const fileInput = document.getElementById('venueImage');
+            const file = fileInput.files[0];
+
+            if (file) {
+                console.log(`File selected: ${file.name}`);
+
+                const sasTokenUrl = await fetchSasTokenForFileUpload(file.name);
+
+                if (sasTokenUrl) {
+                    document.getElementById("submitBtn").addEventListener("click", async function () {
+
+                        try {
+                            const uploadResponse = await fetch(sasTokenUrl, {
+                                method: 'PUT',
+                                headers: {
+                                    'x-ms-blob-type': 'BlockBlob'
+                                },
+                                body: file
+                            });
+
+                            if (uploadResponse.ok) {
+                                console.log('File uploaded successfully');
+
+                                const fileUrl = sasTokenUrl.split("?")[0];
+
+                                const imageUrlInput = document.createElement('input');
+                                imageUrlInput.type = 'hidden';
+                                imageUrlInput.name = 'imageUrl';
+                                imageUrlInput.value = fileUrl;
+                                document.getElementById('venueForm').appendChild(imageUrlInput);
+
+                                const form = document.getElementById('venueForm');
+                                form.submit();
+                            } else {
+                                console.error('Failed to upload file');
+                            }
+                        } catch (error) {
+                            console.error('Error during upload', error);
+                        }
+                    });
+                }
+            }
+        });
+
+    </script>
 }
 
 <style>

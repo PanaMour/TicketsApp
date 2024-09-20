@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using TicketsApp.Models;
 using Azure.Storage.Blobs;
 using System.IO;
+using Azure.Storage.Sas;
+using Azure.Storage;
 
 
 namespace TicketsApp.Controllers
@@ -22,6 +24,48 @@ namespace TicketsApp.Controllers
             _configuration = configuration;
         }
 
+        private string GenerateBlobSasToken(string containerName, string blobName)
+        {
+            string connectionString = _configuration["AzureStorage:ConnectionString"];
+
+            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
+
+            var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            containerClient.CreateIfNotExists();
+
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            BlobSasBuilder sasBuilder = new BlobSasBuilder()
+            {
+                BlobContainerName = containerName,
+                BlobName = blobName,
+                Resource = "b",
+                ExpiresOn = DateTime.UtcNow.AddSeconds(30)
+            };
+
+            sasBuilder.SetPermissions(BlobSasPermissions.Read | BlobSasPermissions.Write);
+
+            BlobSasQueryParameters sasQueryParameters = sasBuilder.ToSasQueryParameters(
+                new StorageSharedKeyCredential(
+                    blobServiceClient.AccountName,
+                    _configuration["AzureStorage:AccountKey"]));
+
+            return blobClient.Uri + "?" + sasQueryParameters.ToString();
+        }
+
+        [HttpGet]
+        public IActionResult GetUploadSasToken(string blobName)
+        {
+            if (string.IsNullOrEmpty(blobName))
+            {
+                return BadRequest("Blob name is required.");
+            }
+
+            string sasToken = GenerateBlobSasToken("venue-images", blobName);
+            return Json(new { sasToken });
+
+        }
         // GET: Venues
         public async Task<IActionResult> Index()
         {
@@ -57,46 +101,23 @@ namespace TicketsApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("VenueId,VenueName,Location,Capacity")] Venue venue, IFormFile VenueImage)
+        public async Task<IActionResult> Create([Bind("VenueId,VenueName,Location,Capacity")] Venue venue, string imageUrl)
         {
-
             if (ModelState.IsValid)
             {
-
-                if (VenueImage != null && VenueImage.Length > 0)
-                {
-                    try
-                    {
-                        string connectionString = _configuration["AzureStorage:ConnectionString"];
-                        BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
-
-                        var containerClient = blobServiceClient.GetBlobContainerClient("venue-images");
-                        await containerClient.CreateIfNotExistsAsync();
-
-                        string fileName = Path.GetFileName(VenueImage.FileName);
-                        var blobClient = containerClient.GetBlobClient(fileName);
-
-
-                        using (var stream = VenueImage.OpenReadStream())
-                        {
-                            await blobClient.UploadAsync(stream, overwrite: true);
-                        }
-
-
-                        venue.ImageUrl = blobClient.Uri.ToString();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error uploading image: {ex.Message}");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("No image uploaded or image is empty.");
-                }
-
                 try
                 {
+                    // Save the image URL that was uploaded via SAS token from the client
+                    if (!string.IsNullOrEmpty(imageUrl))
+                    {
+                        venue.ImageUrl = imageUrl;
+                    }
+                    else
+                    {
+                        Console.WriteLine("No image uploaded.");
+                    }
+
+                    // Save venue details to the database
                     _context.Add(venue);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
