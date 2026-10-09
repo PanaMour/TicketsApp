@@ -1,2 +1,1 @@
-# TicketsApp
- 
+A cinema ticket booking web application built with ASP.NET Core MVC (.NET 8) and Entity Framework Core over SQLite. Users browse events, book tickets and check in with a generated QR code; organisers manage events and venues; administrators assign roles. Sign-in is cookie-based with Google OAuth, and booking confirmations are sent by email through MailKit. Built as a postgraduate project for the Web Software Development course, MSc Advanced Informatics and Computing Systems, University of Piraeus.
